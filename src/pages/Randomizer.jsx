@@ -90,7 +90,7 @@ export default function Randomizer() {
       <div className="mac-window">
         <div className="mac-window-header mac-window-header-active">
           <div className="mac-window-close"></div>
-          <div className="mac-window-title">🎁 Randomizer</div>
+          <div className="mac-window-title">🎁 Match Generator</div>
           <div style={{ width: '12px' }}></div>
         </div>
         <div className="mac-window-content">

@@ -38,7 +38,8 @@ export default function Home() {
   const [editableVersion, setEditableVersion] = useState('Version 1.0')
   const [editableGameNames, setEditableGameNames] = useState({
     'spin-wheel': 'Spin the Wheel',
-    'randomizer': 'Randomizer',
+    'randomizer': 'Match Generator',
+    'draft-order': 'Draft Order',
     'tic-scorekeeper': 'Tic Scorekeeper',
     'phase-10': 'Phase 10'
   })
@@ -96,11 +97,16 @@ export default function Home() {
       imageSize: '80px',
     },
     {
-      name: 'Randomizer',
+      name: 'Match Generator',
       path: '/randomizer',
       icon: randomizerIcon,
       isImage: true,
       imageSize: '80px',
+    },
+    {
+      name: 'Draft Order',
+      path: '/draft-order',
+      icon: '🎲',
     },
     {
       name: 'Tic Scorekeeper',
@@ -231,7 +237,23 @@ export default function Home() {
                 onMouseLeave={(e) => e.currentTarget.style.background = '#f5f5f5'}
                 onClick={() => setShowFileDropdown(false)}
               >
-                Randomizer
+                Match Generator
+              </Link>
+              <Link
+                to="/draft-order"
+                style={{
+                  display: 'block',
+                  padding: '6px 12px',
+                  cursor: 'pointer',
+                  background: '#f5f5f5',
+                  textDecoration: 'none',
+                  color: 'inherit'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = '#4a90c8'}
+                onMouseLeave={(e) => e.currentTarget.style.background = '#f5f5f5'}
+                onClick={() => setShowFileDropdown(false)}
+              >
+                Draft Order
               </Link>
               <Link
                 to="/tic-scorekeeper"
