@@ -4,6 +4,8 @@ import SpinWheel from './pages/SpinWheel'
 import Randomizer from './pages/Randomizer'
 import TicScorekeeper from './pages/TicScorekeeper'
 import Phase10 from './pages/Phase10'
+import Blackjack from './pages/Blackjack'
+import Solitaire from './pages/Solitaire'
 import './macos9.css'
 
 function App() {
@@ -15,6 +17,8 @@ function App() {
         <Route path="/randomizer" element={<Randomizer />} />
         <Route path="/tic-scorekeeper" element={<TicScorekeeper />} />
         <Route path="/phase-10" element={<Phase10 />} />
+        <Route path="/blackjack" element={<Blackjack />} />
+        <Route path="/solitaire" element={<Solitaire />} />
       </Routes>
     </Router>
   )

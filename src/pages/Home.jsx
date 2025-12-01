@@ -1,11 +1,17 @@
 import { Link } from 'react-router-dom'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import appleLogo from '../assets/apple_logo.png'
 import spinWheelIcon from '../assets/spin-the-wheel.png'
 import randomizerIcon from '../assets/Randomizer.png'
 import controllerIcon from '../assets/Ps-controller.png'
 import phase10Icon from '../assets/Phase10.png'
 import macOSIcon from '../assets/MacOS.png'
+import bearsLogo from '../assets/Chicago_Bears.png'
+import vikingsLogo from '../assets/Minnesota_Vikings.png'
+import lionsLogo from '../assets/Detroit Lions.png'
+import trashFull from '../assets/apple_trash_full.webp'
+import creedSong from '../assets/Creed.mp3'
+import iMacG3 from '../assets/Apple iMac G3.png'
 
 export default function Home() {
   const [showHelpDropdown, setShowHelpDropdown] = useState(false)
@@ -13,7 +19,31 @@ export default function Home() {
   const [showPhase10RulesModal, setShowPhase10RulesModal] = useState(false)
   const [showAppleDropdown, setShowAppleDropdown] = useState(false)
   const [showAboutModal, setShowAboutModal] = useState(false)
+  const [showSpecialDropdown, setShowSpecialDropdown] = useState(false)
+  const [showFileDropdown, setShowFileDropdown] = useState(false)
+  const [showEditDropdown, setShowEditDropdown] = useState(false)
+  const [showViewDropdown, setShowViewDropdown] = useState(false)
   const [currentTime, setCurrentTime] = useState(new Date())
+  const [trashOpen, setTrashOpen] = useState(false)
+  const [showSoundModal, setShowSoundModal] = useState(false)
+  const [showIMacModal, setShowIMacModal] = useState(false)
+  const [volume, setVolume] = useState(50)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [partyMode, setPartyMode] = useState(false)
+  const audioRef = useRef(null)
+
+  // Edit mode state
+  const [editMode, setEditMode] = useState(false)
+  const [editableTitle, setEditableTitle] = useState('Family Gaming Hub')
+  const [editableVersion, setEditableVersion] = useState('Version 1.0')
+  const [editableGameNames, setEditableGameNames] = useState({
+    'spin-wheel': 'Spin the Wheel',
+    'randomizer': 'Randomizer',
+    'tic-scorekeeper': 'Tic Scorekeeper',
+    'phase-10': 'Phase 10'
+  })
+  const [backgroundColor, setBackgroundColor] = useState('linear-gradient(135deg, #4a90c8 0%, #5ba3d8 50%, #4a90c8 100%)')
+  const [showColorPicker, setShowColorPicker] = useState(false)
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -21,6 +51,42 @@ export default function Home() {
     }, 1000)
     return () => clearInterval(timer)
   }, [])
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume / 100
+    }
+  }, [volume])
+
+  const togglePlayPause = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause()
+      } else {
+        audioRef.current.play()
+      }
+      setIsPlaying(!isPlaying)
+    }
+  }
+
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setShowHelpDropdown(false)
+      setShowAppleDropdown(false)
+      setShowSpecialDropdown(false)
+      setShowFileDropdown(false)
+      setShowEditDropdown(false)
+      setShowViewDropdown(false)
+    }
+
+    if (showHelpDropdown || showAppleDropdown || showSpecialDropdown || showFileDropdown || showEditDropdown || showViewDropdown) {
+      document.addEventListener('click', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside)
+    }
+  }, [showHelpDropdown, showAppleDropdown, showSpecialDropdown, showFileDropdown, showEditDropdown, showViewDropdown])
   const games = [
     {
       name: 'Spin the Wheel',
@@ -53,9 +119,10 @@ export default function Home() {
   return (
     <div className="home-container" style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #4a90c8 0%, #5ba3d8 50%, #4a90c8 100%)',
+      background: backgroundColor,
       display: 'flex',
-      flexDirection: 'column'
+      flexDirection: 'column',
+      position: 'relative'
     }}>
       {/* Navbar / Menu Bar */}
       <div className="navbar" style={{
@@ -71,7 +138,13 @@ export default function Home() {
       }}>
         <div
           style={{ display: 'flex', alignItems: 'center', gap: '6px', position: 'relative', cursor: 'pointer' }}
-          onClick={() => setShowAppleDropdown(!showAppleDropdown)}
+          onClick={(e) => {
+            e.stopPropagation()
+            setShowFileDropdown(false)
+            setShowSpecialDropdown(false)
+            setShowHelpDropdown(false)
+            setShowAppleDropdown(!showAppleDropdown)
+          }}
         >
           <img src={appleLogo} alt="Apple" style={{ height: '20px', width: 'auto' }} />
           {showAppleDropdown && (
@@ -105,13 +178,272 @@ export default function Home() {
             </div>
           )}
         </div>
-        <div>File</div>
-        <div>Edit</div>
-        <div>View</div>
-        <div>Special</div>
         <div
           style={{ position: 'relative', cursor: 'pointer' }}
-          onClick={() => setShowHelpDropdown(!showHelpDropdown)}
+          onClick={(e) => {
+            e.stopPropagation()
+            setShowAppleDropdown(false)
+            setShowSpecialDropdown(false)
+            setShowHelpDropdown(false)
+            setShowFileDropdown(!showFileDropdown)
+          }}
+        >
+          File
+          {showFileDropdown && (
+            <div style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              background: '#f5f5f5',
+              border: '2px outset #999',
+              boxShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+              minWidth: '180px',
+              zIndex: 1000,
+              marginTop: '2px'
+            }}>
+              <Link
+                to="/spin-wheel"
+                style={{
+                  display: 'block',
+                  padding: '6px 12px',
+                  cursor: 'pointer',
+                  background: '#f5f5f5',
+                  textDecoration: 'none',
+                  color: 'inherit'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = '#4a90c8'}
+                onMouseLeave={(e) => e.currentTarget.style.background = '#f5f5f5'}
+                onClick={() => setShowFileDropdown(false)}
+              >
+                Spin the Wheel
+              </Link>
+              <Link
+                to="/randomizer"
+                style={{
+                  display: 'block',
+                  padding: '6px 12px',
+                  cursor: 'pointer',
+                  background: '#f5f5f5',
+                  textDecoration: 'none',
+                  color: 'inherit'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = '#4a90c8'}
+                onMouseLeave={(e) => e.currentTarget.style.background = '#f5f5f5'}
+                onClick={() => setShowFileDropdown(false)}
+              >
+                Randomizer
+              </Link>
+              <Link
+                to="/tic-scorekeeper"
+                style={{
+                  display: 'block',
+                  padding: '6px 12px',
+                  cursor: 'pointer',
+                  background: '#f5f5f5',
+                  textDecoration: 'none',
+                  color: 'inherit'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = '#4a90c8'}
+                onMouseLeave={(e) => e.currentTarget.style.background = '#f5f5f5'}
+                onClick={() => setShowFileDropdown(false)}
+              >
+                Tic Scorekeeper
+              </Link>
+              <Link
+                to="/phase-10"
+                style={{
+                  display: 'block',
+                  padding: '6px 12px',
+                  cursor: 'pointer',
+                  background: '#f5f5f5',
+                  textDecoration: 'none',
+                  color: 'inherit'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = '#4a90c8'}
+                onMouseLeave={(e) => e.currentTarget.style.background = '#f5f5f5'}
+                onClick={() => setShowFileDropdown(false)}
+              >
+                Phase 10
+              </Link>
+            </div>
+          )}
+        </div>
+        <div
+          style={{ position: 'relative', cursor: 'pointer' }}
+          onClick={(e) => {
+            e.stopPropagation()
+            setShowAppleDropdown(false)
+            setShowFileDropdown(false)
+            setShowSpecialDropdown(false)
+            setShowHelpDropdown(false)
+            setShowEditDropdown(!showEditDropdown)
+          }}
+        >
+          Edit
+          {showEditDropdown && (
+            <div style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              background: '#f5f5f5',
+              border: '2px outset #999',
+              boxShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+              minWidth: '180px',
+              zIndex: 1000,
+              marginTop: '2px'
+            }}>
+              <div
+                style={{
+                  padding: '6px 12px',
+                  cursor: 'pointer',
+                  background: '#f5f5f5'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = '#4a90c8'}
+                onMouseLeave={(e) => e.currentTarget.style.background = '#f5f5f5'}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setEditMode(!editMode)
+                  setShowEditDropdown(false)
+                }}
+              >
+                {editMode ? '✓ Edit Mode' : 'Edit Mode'}
+              </div>
+              {editMode && (
+                <>
+                  <div style={{ borderTop: '1px solid #999', margin: '2px 0' }}></div>
+                  <div
+                    style={{
+                      padding: '6px 12px',
+                      cursor: 'pointer',
+                      background: '#f5f5f5'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = '#4a90c8'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = '#f5f5f5'}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setShowColorPicker(true)
+                      setShowEditDropdown(false)
+                    }}
+                  >
+                    Change Background...
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+        <div
+          style={{ position: 'relative', cursor: 'pointer' }}
+          onClick={(e) => {
+            e.stopPropagation()
+            setShowAppleDropdown(false)
+            setShowFileDropdown(false)
+            setShowEditDropdown(false)
+            setShowSpecialDropdown(false)
+            setShowHelpDropdown(false)
+            setShowViewDropdown(!showViewDropdown)
+          }}
+        >
+          View
+          {showViewDropdown && (
+            <div style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              background: '#f5f5f5',
+              border: '2px outset #999',
+              boxShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+              minWidth: '180px',
+              zIndex: 1000,
+              marginTop: '2px'
+            }}>
+              <div
+                style={{
+                  padding: '6px 12px',
+                  cursor: 'pointer',
+                  background: '#f5f5f5'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = '#4a90c8'}
+                onMouseLeave={(e) => e.currentTarget.style.background = '#f5f5f5'}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setPartyMode(!partyMode)
+                  setShowViewDropdown(false)
+                }}
+              >
+                {partyMode ? '✓ Party Mode' : 'Party Mode'}
+              </div>
+            </div>
+          )}
+        </div>
+        <div
+          style={{ position: 'relative', cursor: 'pointer' }}
+          onClick={(e) => {
+            e.stopPropagation()
+            setShowAppleDropdown(false)
+            setShowFileDropdown(false)
+            setShowHelpDropdown(false)
+            setShowViewDropdown(false)
+            setShowSpecialDropdown(!showSpecialDropdown)
+          }}
+        >
+          Special
+          {showSpecialDropdown && (
+            <div style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              background: '#f5f5f5',
+              border: '2px outset #999',
+              boxShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+              minWidth: '150px',
+              zIndex: 1000,
+              marginTop: '2px'
+            }}>
+              <Link
+                to="/blackjack"
+                style={{
+                  display: 'block',
+                  padding: '6px 12px',
+                  cursor: 'pointer',
+                  background: '#f5f5f5',
+                  textDecoration: 'none',
+                  color: 'inherit'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = '#4a90c8'}
+                onMouseLeave={(e) => e.currentTarget.style.background = '#f5f5f5'}
+                onClick={() => setShowSpecialDropdown(false)}
+              >
+                Blackjack
+              </Link>
+              <Link
+                to="/solitaire"
+                style={{
+                  display: 'block',
+                  padding: '6px 12px',
+                  cursor: 'pointer',
+                  background: '#f5f5f5',
+                  textDecoration: 'none',
+                  color: 'inherit'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = '#4a90c8'}
+                onMouseLeave={(e) => e.currentTarget.style.background = '#f5f5f5'}
+                onClick={() => setShowSpecialDropdown(false)}
+              >
+                Solitaire
+              </Link>
+            </div>
+          )}
+        </div>
+        <div
+          style={{ position: 'relative', cursor: 'pointer' }}
+          onClick={(e) => {
+            e.stopPropagation()
+            setShowAppleDropdown(false)
+            setShowFileDropdown(false)
+            setShowSpecialDropdown(false)
+            setShowHelpDropdown(!showHelpDropdown)
+          }}
         >
           Help
           {showHelpDropdown && (
@@ -167,9 +499,19 @@ export default function Home() {
             {currentTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
           </div>
           {/* Sound Icon */}
-          <div style={{ fontSize: '16px' }}>🔊</div>
+          <div
+            style={{ fontSize: '16px', cursor: 'pointer' }}
+            onClick={() => setShowSoundModal(true)}
+          >
+            🔊
+          </div>
           {/* MacOS Icon */}
-          <img src={macOSIcon} alt="MacOS" style={{ height: '18px', width: 'auto' }} />
+          <img
+            src={macOSIcon}
+            alt="MacOS"
+            style={{ height: '18px', width: 'auto', cursor: 'pointer' }}
+            onClick={() => setShowIMacModal(true)}
+          />
         </div>
       </div>
 
@@ -192,11 +534,35 @@ export default function Home() {
               <div style={{ marginBottom: '15px' }}>
                 <img src={controllerIcon} alt="Controller" style={{ width: '64px', height: '64px', objectFit: 'contain' }} />
               </div>
-              <h1 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '5px' }}>
-                Family Gaming Hub
+              <h1
+                style={{
+                  fontSize: '24px',
+                  fontWeight: 'bold',
+                  marginBottom: '5px',
+                  outline: editMode ? '2px dashed #4a90c8' : 'none',
+                  padding: '2px 4px',
+                  cursor: editMode ? 'text' : 'default'
+                }}
+                contentEditable={editMode}
+                suppressContentEditableWarning={true}
+                onBlur={(e) => setEditableTitle(e.target.textContent)}
+              >
+                {editableTitle}
               </h1>
-              <p style={{ fontSize: '12px', color: '#666', marginBottom: '0' }}>
-                Version 1.0
+              <p
+                style={{
+                  fontSize: '12px',
+                  color: '#666',
+                  marginBottom: '0',
+                  outline: editMode ? '2px dashed #4a90c8' : 'none',
+                  padding: '2px 4px',
+                  cursor: editMode ? 'text' : 'default'
+                }}
+                contentEditable={editMode}
+                suppressContentEditableWarning={true}
+                onBlur={(e) => setEditableVersion(e.target.textContent)}
+              >
+                {editableVersion}
               </p>
             </div>
             <div style={{
@@ -205,7 +571,9 @@ export default function Home() {
               gap: '20px',
               justifyItems: 'center'
             }}>
-              {games.map((game) => (
+              {games.map((game) => {
+                const gameKey = game.path.replace('/', '')
+                return (
                 <Link
                   key={game.path}
                   to={game.path}
@@ -215,7 +583,8 @@ export default function Home() {
                     flexDirection: 'column',
                     alignItems: 'center',
                     width: '100px',
-                    cursor: 'pointer'
+                    cursor: editMode ? 'default' : 'pointer',
+                    pointerEvents: editMode ? 'none' : 'auto'
                   }}
                 >
                   <div style={{
@@ -271,18 +640,33 @@ export default function Home() {
                       )}
                     </div>
                   </div>
-                  <div style={{
-                    color: '#000',
-                    fontSize: '11px',
-                    textAlign: 'center',
-                    lineHeight: '1.2',
-                    wordWrap: 'break-word',
-                    maxWidth: '100%'
-                  }}>
-                    {game.name}
+                  <div
+                    style={{
+                      color: '#000',
+                      fontSize: '11px',
+                      textAlign: 'center',
+                      lineHeight: '1.2',
+                      wordWrap: 'break-word',
+                      maxWidth: '100%',
+                      outline: editMode ? '2px dashed #4a90c8' : 'none',
+                      padding: '2px 4px',
+                      cursor: editMode ? 'text' : 'default',
+                      pointerEvents: editMode ? 'auto' : 'none'
+                    }}
+                    contentEditable={editMode}
+                    suppressContentEditableWarning={true}
+                    onBlur={(e) => {
+                      setEditableGameNames({
+                        ...editableGameNames,
+                        [gameKey]: e.target.textContent
+                      })
+                    }}
+                  >
+                    {editableGameNames[gameKey] || game.name}
                   </div>
                 </Link>
-              ))}
+                )
+              })}
             </div>
           </div>
         </div>
@@ -305,18 +689,33 @@ export default function Home() {
           flexDirection: 'column',
           alignItems: 'center',
           width: '80px',
-          pointerEvents: 'auto'
+          pointerEvents: 'auto',
+          position: 'relative'
         }}>
-          <div style={{
-            width: '60px',
-            height: '60px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '50px',
-            marginBottom: '8px'
-          }}>
-            🗑️
+          <div
+            onClick={() => setTrashOpen(!trashOpen)}
+            style={{
+              width: '60px',
+              height: '60px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: '8px',
+              cursor: 'pointer',
+              transform: trashOpen ? 'scale(1.1)' : 'scale(1)',
+              transition: 'transform 0.2s'
+            }}
+          >
+            <img
+              src={trashFull}
+              alt="Trash"
+              style={{
+                width: '60px',
+                height: '60px',
+                objectFit: 'contain',
+                filter: 'drop-shadow(2px 2px 3px rgba(0,0,0,0.3))'
+              }}
+            />
           </div>
           <div style={{
             color: 'white',
@@ -333,6 +732,149 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* Trash Modal - NFC North Rivals */}
+      {trashOpen && (
+        <div className="mac-modal-overlay" onClick={() => setTrashOpen(false)}>
+          <div className="mac-window" style={{ width: '420px', maxWidth: '90%', margin: '20px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="mac-window-header mac-window-header-active">
+              <div className="mac-window-close" onClick={() => setTrashOpen(false)}></div>
+              <div className="mac-window-title">Trash</div>
+              <div style={{ width: '12px' }}></div>
+            </div>
+            <div className="mac-window-content" style={{ padding: '0', background: 'white' }}>
+              {/* Toolbar */}
+              <div style={{
+                background: 'linear-gradient(180deg, #f5f5f5 0%, #e0e0e0 100%)',
+                borderBottom: '1px solid #999',
+                padding: '6px 12px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <div style={{ fontSize: '11px', fontWeight: 'bold' }}>3 items</div>
+              </div>
+
+              {/* Icon Grid View */}
+              <div style={{
+                padding: '20px',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '20px',
+                justifyItems: 'center',
+                background: 'white',
+                minHeight: '180px'
+              }}>
+                {/* Chicago Bears */}
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  width: '100px',
+                  cursor: 'default'
+                }}>
+                  <div style={{
+                    width: '70px',
+                    height: '70px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '6px',
+                    border: '2px solid transparent'
+                  }}>
+                    <img src={bearsLogo} alt="Chicago Bears" style={{ width: '64px', height: '64px', objectFit: 'contain' }} />
+                  </div>
+                  <div style={{
+                    fontSize: '11px',
+                    textAlign: 'center',
+                    lineHeight: '1.2',
+                    wordWrap: 'break-word',
+                    maxWidth: '100%',
+                    color: '#000'
+                  }}>
+                    Chicago Bears
+                  </div>
+                </div>
+
+                {/* Minnesota Vikings */}
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  width: '100px',
+                  cursor: 'default'
+                }}>
+                  <div style={{
+                    width: '70px',
+                    height: '70px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '6px',
+                    border: '2px solid transparent'
+                  }}>
+                    <img src={vikingsLogo} alt="Minnesota Vikings" style={{ width: '64px', height: '64px', objectFit: 'contain' }} />
+                  </div>
+                  <div style={{
+                    fontSize: '11px',
+                    textAlign: 'center',
+                    lineHeight: '1.2',
+                    wordWrap: 'break-word',
+                    maxWidth: '100%',
+                    color: '#000'
+                  }}>
+                    Minnesota Vikings
+                  </div>
+                </div>
+
+                {/* Detroit Lions */}
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  width: '100px',
+                  cursor: 'default'
+                }}>
+                  <div style={{
+                    width: '70px',
+                    height: '70px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '6px',
+                    border: '2px solid transparent'
+                  }}>
+                    <img src={lionsLogo} alt="Detroit Lions" style={{ width: '64px', height: '64px', objectFit: 'contain' }} />
+                  </div>
+                  <div style={{
+                    fontSize: '11px',
+                    textAlign: 'center',
+                    lineHeight: '1.2',
+                    wordWrap: 'break-word',
+                    maxWidth: '100%',
+                    color: '#000'
+                  }}>
+                    Detroit Lions
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer with status message */}
+              <div style={{
+                background: 'linear-gradient(180deg, #f5f5f5 0%, #e0e0e0 100%)',
+                borderTop: '1px solid #999',
+                padding: '6px 12px',
+                fontSize: '11px',
+                color: '#333',
+                textAlign: 'center',
+                fontWeight: 'bold'
+              }}>
+                💚 Go Pack Go! 💛
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Rules Modal */}
       {showRulesModal && (
@@ -580,7 +1122,7 @@ export default function Home() {
                 textAlign: 'left'
               }}>
                 <p style={{ marginBottom: '6px' }}><strong>Developer:</strong> Luke Stahl</p>
-                <p style={{ marginBottom: '6px' }}><strong>Memory:</strong> 64 MB of fun</p>
+                <p style={{ marginBottom: '6px' }}><strong>Memory:</strong> 1 TB of fun</p>
                 <p style={{ marginBottom: '6px' }}><strong>Processor:</strong> React 18.3.1</p>
                 <p><strong>Built with:</strong> Code & curiosity</p>
               </div>
@@ -601,6 +1143,273 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* Color Picker Modal */}
+      {showColorPicker && (
+        <div className="mac-modal-overlay" onClick={() => setShowColorPicker(false)}>
+          <div className="mac-window" style={{ width: '400px', margin: '20px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="mac-window-header mac-window-header-active">
+              <div className="mac-window-close" onClick={() => setShowColorPicker(false)}></div>
+              <div className="mac-window-title">Change Background</div>
+              <div style={{ width: '12px' }}></div>
+            </div>
+            <div className="mac-window-content" style={{ padding: '20px' }}>
+              <p style={{ fontSize: '12px', marginBottom: '15px' }}>Choose a background color:</p>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '10px',
+                marginBottom: '20px'
+              }}>
+                {[
+                  { name: 'Classic Blue', value: 'linear-gradient(135deg, #4a90c8 0%, #5ba3d8 50%, #4a90c8 100%)' },
+                  { name: 'Purple Dream', value: 'linear-gradient(135deg, #8b5cf6 0%, #a78bfa 50%, #8b5cf6 100%)' },
+                  { name: 'Green Forest', value: 'linear-gradient(135deg, #10b981 0%, #34d399 50%, #10b981 100%)' },
+                  { name: 'Pink Sunset', value: 'linear-gradient(135deg, #ec4899 0%, #f472b6 50%, #ec4899 100%)' },
+                  { name: 'Orange Burst', value: 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 50%, #f59e0b 100%)' },
+                  { name: 'Red Fire', value: 'linear-gradient(135deg, #ef4444 0%, #f87171 50%, #ef4444 100%)' },
+                  { name: 'Teal Wave', value: 'linear-gradient(135deg, #14b8a6 0%, #2dd4bf 50%, #14b8a6 100%)' },
+                  { name: 'Indigo Night', value: 'linear-gradient(135deg, #6366f1 0%, #818cf8 50%, #6366f1 100%)' },
+                  { name: 'Gray Stone', value: 'linear-gradient(135deg, #6b7280 0%, #9ca3af 50%, #6b7280 100%)' }
+                ].map((color) => (
+                  <div
+                    key={color.name}
+                    onClick={() => {
+                      setBackgroundColor(color.value)
+                      setShowColorPicker(false)
+                    }}
+                    style={{
+                      background: color.value,
+                      height: '60px',
+                      borderRadius: '6px',
+                      border: '2px solid #333',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'flex-end',
+                      justifyContent: 'center',
+                      padding: '5px',
+                      boxShadow: '2px 2px 4px rgba(0,0,0,0.2)'
+                    }}
+                  >
+                    <span style={{
+                      fontSize: '10px',
+                      fontWeight: 'bold',
+                      color: 'white',
+                      textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+                      background: 'rgba(0,0,0,0.3)',
+                      padding: '2px 6px',
+                      borderRadius: '3px'
+                    }}>
+                      {color.name}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <button
+                  onClick={() => setShowColorPicker(false)}
+                  className="mac-button"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Mode Indicator */}
+      {editMode && (
+        <div style={{
+          position: 'fixed',
+          top: '40px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: 'rgba(74, 144, 200, 0.95)',
+          color: 'white',
+          padding: '8px 16px',
+          borderRadius: '8px',
+          border: '2px solid #333',
+          boxShadow: '3px 3px 8px rgba(0,0,0,0.4)',
+          fontSize: '11px',
+          fontWeight: 'bold',
+          zIndex: 1000,
+          textAlign: 'center',
+          maxWidth: 'calc(100% - 40px)'
+        }}>
+          ✏️ Edit Mode
+        </div>
+      )}
+
+      {/* iMac G3 Modal */}
+      {showIMacModal && (
+        <div className="mac-modal-overlay" onClick={() => setShowIMacModal(false)}>
+          <div className="mac-window" style={{ width: '500px', maxWidth: '90%', margin: '20px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="mac-window-header mac-window-header-active">
+              <div className="mac-window-close" onClick={() => setShowIMacModal(false)}></div>
+              <div className="mac-window-title">The year is 1998</div>
+              <div style={{ width: '12px' }}></div>
+            </div>
+            <div className="mac-window-content" style={{ padding: '20px' }}>
+              <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                <img
+                  src={iMacG3}
+                  alt="Apple iMac G3"
+                  style={{
+                    maxWidth: '100%',
+                    height: 'auto',
+                    maxHeight: '300px',
+                    objectFit: 'contain'
+                  }}
+                />
+              </div>
+              <h3 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '10px', textAlign: 'center' }}>
+                Inspired by the Apple iMac G3
+              </h3>
+              <p style={{ fontSize: '12px', lineHeight: '1.6', color: '#333', marginBottom: '15px' }}>
+                Apple was on the brink of collapse in the late 90s after years of failed products, but Steve Jobs' return and the launch of the iMac in 1998 reversed its trajectory by introducing a bold, Internet-ready all-in-one device that redefined consumer tech design. While early sales were modest, the iMac became a cultural and design turning point that set Apple back on a path to growth.
+              </p>
+              <div style={{ textAlign: 'center' }}>
+                <button
+                  onClick={() => setShowIMacModal(false)}
+                  className="mac-button mac-button-primary"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sound Modal */}
+      {showSoundModal && (
+        <div className="mac-modal-overlay" onClick={() => setShowSoundModal(false)}>
+          <div className="mac-window" style={{ width: '400px', maxWidth: '90%', margin: '20px' }} onClick={(e) => e.stopPropagation()}>
+            <div className="mac-window-header mac-window-header-active">
+              <div className="mac-window-close" onClick={() => {
+                setShowSoundModal(false)
+                if (audioRef.current) {
+                  audioRef.current.pause()
+                  setIsPlaying(false)
+                }
+              }}></div>
+              <div className="mac-window-title">Sound</div>
+              <div style={{ width: '12px' }}></div>
+            </div>
+            <div className="mac-window-content" style={{ padding: '20px' }}>
+              <div style={{ marginBottom: '20px', textAlign: 'center' }}>
+                <h3 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '10px' }}>
+                  Now Playing: Creed 🎸
+                </h3>
+              </div>
+
+              {/* Volume Control */}
+              <div style={{ marginBottom: '20px' }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  marginBottom: '10px'
+                }}>
+                  <span style={{ fontSize: '16px' }}>🔇</span>
+                  <div style={{ flex: 1, position: 'relative', height: '30px' }}>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={volume}
+                      onChange={(e) => setVolume(Number(e.target.value))}
+                      style={{
+                        width: '100%',
+                        height: '8px',
+                        background: '#ddd',
+                        border: '1px inset #999',
+                        borderRadius: '4px',
+                        outline: 'none',
+                        cursor: 'pointer',
+                        appearance: 'none',
+                        WebkitAppearance: 'none'
+                      }}
+                    />
+                  </div>
+                  <span style={{ fontSize: '16px' }}>🔊</span>
+                </div>
+                <div style={{ textAlign: 'center', fontSize: '12px', color: '#666' }}>
+                  Volume: {volume}%
+                </div>
+              </div>
+
+              {/* Play/Pause Button */}
+              <div style={{ textAlign: 'center', marginBottom: '15px' }}>
+                <button
+                  onClick={togglePlayPause}
+                  className="mac-button mac-button-primary"
+                  style={{ fontSize: '14px', padding: '10px 30px' }}
+                >
+                  {isPlaying ? '⏸ Pause' : '▶ Play'}
+                </button>
+              </div>
+
+              <div style={{
+                fontSize: '10px',
+                color: '#999',
+                textAlign: 'center',
+                fontStyle: 'italic'
+              }}>
+                With Arms Wide Open 🎵
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hidden Audio Element */}
+      <audio ref={audioRef} src={creedSong} loop />
+
+      {/* Party Mode Confetti */}
+      {partyMode && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          pointerEvents: 'none',
+          zIndex: 9999,
+          overflow: 'hidden'
+        }}>
+          {[...Array(50)].map((_, i) => (
+            <div
+              key={i}
+              style={{
+                position: 'absolute',
+                top: '-10px',
+                left: `${Math.random() * 100}%`,
+                width: '10px',
+                height: '10px',
+                background: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'][Math.floor(Math.random() * 6)],
+                animation: `confetti-fall ${3 + Math.random() * 3}s linear infinite`,
+                animationDelay: `${Math.random() * 5}s`,
+                transform: `rotate(${Math.random() * 360}deg)`
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      <style>{`
+        @keyframes confetti-fall {
+          0% {
+            transform: translateY(0) rotate(0deg);
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(100vh) rotate(720deg);
+            opacity: 0;
+          }
+        }
+      `}</style>
     </div>
   )
 }
