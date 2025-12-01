@@ -34,7 +34,6 @@ export default function Solitaire() {
   const [waste, setWaste] = useState([])
   const [foundations, setFoundations] = useState([[], [], [], []])
   const [tableau, setTableau] = useState([[], [], [], [], [], [], []])
-  const [draggedCard, setDraggedCard] = useState(null)
   const [gameWon, setGameWon] = useState(false)
 
   useEffect(() => {
@@ -65,7 +64,6 @@ export default function Solitaire() {
     setStock(deck.slice(deckIndex))
     setWaste([])
     setFoundations([[], [], [], []])
-    setDraggedCard(null)
     setGameWon(false)
   }
 
@@ -105,99 +103,111 @@ export default function Solitaire() {
     return isRed1 !== isRed2 && card.valueIndex === topCard.valueIndex - 1
   }
 
-  const handleDragStart = (e, card, source, sourceIndex) => {
+  const handleCardDoubleClick = (card, source, sourceIndex) => {
     if (!card.faceUp) return
 
-    let cards = []
-    if (source === 'waste') {
-      cards = [waste[0]]
-    } else if (source === 'tableau') {
+    // For tableau cards, check if we're clicking a sequence
+    if (source === 'tableau') {
       const col = tableau[sourceIndex]
       const cardIndex = col.findIndex(c => c.id === card.id)
-      cards = col.slice(cardIndex)
+
+      // Only try foundation if it's the last card (single card)
+      if (cardIndex === col.length - 1) {
+        for (let i = 0; i < foundations.length; i++) {
+          if (canPlaceOnFoundation(card, foundations[i])) {
+            moveCardToFoundation(card, source, sourceIndex, i)
+            return
+          }
+        }
+      }
+
+      // Try to move the sequence (from clicked card to end) to another tableau column
+      for (let i = 0; i < tableau.length; i++) {
+        if (i !== sourceIndex && canPlaceOnTableau(card, tableau[i])) {
+          moveCardToTableau(card, source, sourceIndex, i)
+          return
+        }
+      }
+    } else if (source === 'waste') {
+      // Try to move to foundation first
+      for (let i = 0; i < foundations.length; i++) {
+        if (canPlaceOnFoundation(card, foundations[i])) {
+          moveCardToFoundation(card, source, sourceIndex, i)
+          return
+        }
+      }
+
+      // Try to move to tableau
+      for (let i = 0; i < tableau.length; i++) {
+        if (canPlaceOnTableau(card, tableau[i])) {
+          moveCardToTableau(card, source, sourceIndex, i)
+          return
+        }
+      }
     } else if (source === 'foundation') {
-      cards = [foundations[sourceIndex][foundations[sourceIndex].length - 1]]
+      // Try to move from foundation to tableau
+      for (let i = 0; i < tableau.length; i++) {
+        if (canPlaceOnTableau(card, tableau[i])) {
+          moveCardToTableau(card, source, sourceIndex, i)
+          return
+        }
+      }
     }
-
-    setDraggedCard({ cards, source, sourceIndex })
-    e.dataTransfer.effectAllowed = 'move'
   }
 
-  const handleDragOver = (e) => {
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'move'
-  }
+  const moveCardToFoundation = (card, source, sourceIndex, foundationIndex) => {
+    const newFoundations = [...foundations]
+    newFoundations[foundationIndex] = [...newFoundations[foundationIndex], card]
 
-  const handleDropOnTableau = (e, targetIndex) => {
-    e.preventDefault()
-    if (!draggedCard) return
-
-    const cards = draggedCard.cards
-    if (canPlaceOnTableau(cards[0], tableau[targetIndex])) {
-      // Add cards to target
+    if (source === 'waste') {
+      setWaste(waste.slice(1))
+    } else if (source === 'tableau') {
       const newTableau = [...tableau]
-      newTableau[targetIndex] = [...newTableau[targetIndex], ...cards]
+      const col = [...tableau[sourceIndex]]
+      col.pop()
 
-      // Remove from source
-      if (draggedCard.source === 'waste') {
-        setWaste(waste.slice(1))
-      } else if (draggedCard.source === 'tableau') {
-        const col = [...tableau[draggedCard.sourceIndex]]
-        const cardIndex = col.findIndex(c => c.id === cards[0].id)
-        const newCol = col.slice(0, cardIndex)
-
-        if (newCol.length > 0 && !newCol[newCol.length - 1].faceUp) {
-          newCol[newCol.length - 1].faceUp = true
-        }
-
-        newTableau[draggedCard.sourceIndex] = newCol
-      } else if (draggedCard.source === 'foundation') {
-        const newFoundations = [...foundations]
-        newFoundations[draggedCard.sourceIndex] = newFoundations[draggedCard.sourceIndex].slice(0, -1)
-        setFoundations(newFoundations)
+      if (col.length > 0 && !col[col.length - 1].faceUp) {
+        col[col.length - 1].faceUp = true
       }
 
+      newTableau[sourceIndex] = col
       setTableau(newTableau)
+    } else if (source === 'foundation') {
+      newFoundations[sourceIndex] = newFoundations[sourceIndex].slice(0, -1)
     }
 
-    setDraggedCard(null)
+    setFoundations(newFoundations)
   }
 
-  const handleDropOnFoundation = (e, foundationIndex) => {
-    e.preventDefault()
-    if (!draggedCard || draggedCard.cards.length !== 1) return
+  const moveCardToTableau = (card, source, sourceIndex, targetIndex) => {
+    const newTableau = [...tableau]
 
-    const card = draggedCard.cards[0]
-    if (canPlaceOnFoundation(card, foundations[foundationIndex])) {
-      // Add to foundation
-      const newFoundations = [...foundations]
-      newFoundations[foundationIndex] = [...newFoundations[foundationIndex], card]
+    if (source === 'waste') {
+      newTableau[targetIndex] = [...newTableau[targetIndex], card]
+      setWaste(waste.slice(1))
+    } else if (source === 'tableau') {
+      const col = [...tableau[sourceIndex]]
+      const cardIndex = col.findIndex(c => c.id === card.id)
+      const cardsToMove = col.slice(cardIndex)
+      const remainingCards = col.slice(0, cardIndex)
 
-      // Remove from source
-      if (draggedCard.source === 'waste') {
-        setWaste(waste.slice(1))
-      } else if (draggedCard.source === 'tableau') {
-        const col = [...tableau[draggedCard.sourceIndex]]
-        const newCol = col.slice(0, -1)
-
-        if (newCol.length > 0 && !newCol[newCol.length - 1].faceUp) {
-          newCol[newCol.length - 1].faceUp = true
-        }
-
-        const newTableau = [...tableau]
-        newTableau[draggedCard.sourceIndex] = newCol
-        setTableau(newTableau)
-      } else if (draggedCard.source === 'foundation') {
-        newFoundations[draggedCard.sourceIndex] = newFoundations[draggedCard.sourceIndex].slice(0, -1)
+      if (remainingCards.length > 0 && !remainingCards[remainingCards.length - 1].faceUp) {
+        remainingCards[remainingCards.length - 1].faceUp = true
       }
 
+      newTableau[sourceIndex] = remainingCards
+      newTableau[targetIndex] = [...newTableau[targetIndex], ...cardsToMove]
+    } else if (source === 'foundation') {
+      newTableau[targetIndex] = [...newTableau[targetIndex], card]
+      const newFoundations = [...foundations]
+      newFoundations[sourceIndex] = newFoundations[sourceIndex].slice(0, -1)
       setFoundations(newFoundations)
     }
 
-    setDraggedCard(null)
+    setTableau(newTableau)
   }
 
-  const Card = ({ card, onDragStart, style = {} }) => {
+  const Card = ({ card, onDoubleClick, style = {} }) => {
     if (!card) {
       return (
         <div style={{
@@ -229,8 +239,7 @@ export default function Solitaire() {
 
     return (
       <div
-        draggable={!!onDragStart}
-        onDragStart={onDragStart}
+        onDoubleClick={onDoubleClick}
         style={{
           width: '60px',
           height: '85px',
@@ -241,14 +250,18 @@ export default function Solitaire() {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          cursor: onDragStart ? 'grab' : 'default',
+          cursor: onDoubleClick ? 'pointer' : 'default',
           boxShadow: '1px 1px 3px rgba(0,0,0,0.3)',
           position: 'relative',
           userSelect: 'none',
           ...style
         }}
       >
+        {/* Top left corner */}
         <div style={{
+          position: 'absolute',
+          top: '4px',
+          left: '4px',
           fontSize: '11px',
           fontWeight: 'bold',
           color: isRed ? '#d32f2f' : '#000',
@@ -258,6 +271,8 @@ export default function Solitaire() {
           {card.value}
           <div style={{ fontSize: '14px' }}>{card.suit}</div>
         </div>
+
+        {/* Center suit */}
         <div style={{
           fontSize: '24px',
           textAlign: 'center',
@@ -266,11 +281,15 @@ export default function Solitaire() {
         }}>
           {card.suit}
         </div>
+
+        {/* Bottom right corner (rotated 180deg) */}
         <div style={{
+          position: 'absolute',
+          bottom: '4px',
+          right: '4px',
           fontSize: '11px',
           fontWeight: 'bold',
           color: isRed ? '#d32f2f' : '#000',
-          textAlign: 'right',
           lineHeight: '1',
           transform: 'rotate(180deg)',
           pointerEvents: 'none'
@@ -347,7 +366,7 @@ export default function Solitaire() {
                 {waste.length > 0 ? (
                   <Card
                     card={waste[0]}
-                    onDragStart={(e) => handleDragStart(e, waste[0], 'waste', 0)}
+                    onDoubleClick={() => handleCardDoubleClick(waste[0], 'waste', 0)}
                   />
                 ) : (
                   <Card card={null} />
@@ -355,32 +374,20 @@ export default function Solitaire() {
               </div>
             </div>
 
-            {/* New Game Button */}
-            <button
-              onClick={newGame}
-              className="mac-button mac-button-primary"
-              style={{ fontSize: '12px', padding: '6px 16px' }}
-            >
-              New Game
-            </button>
-
             {/* Foundations */}
             <div style={{ display: 'flex', gap: '10px' }}>
               {foundations.map((foundation, index) => (
                 <div
                   key={index}
-                  onDragOver={handleDragOver}
-                  onDrop={(e) => handleDropOnFoundation(e, index)}
                   style={{
                     width: '60px',
-                    height: '85px',
-                    cursor: 'pointer'
+                    height: '85px'
                   }}
                 >
                   {foundation.length > 0 ? (
                     <Card
                       card={foundation[foundation.length - 1]}
-                      onDragStart={(e) => handleDragStart(e, foundation[foundation.length - 1], 'foundation', index)}
+                      onDoubleClick={() => handleCardDoubleClick(foundation[foundation.length - 1], 'foundation', index)}
                     />
                   ) : (
                     <Card card={null} />
@@ -399,8 +406,6 @@ export default function Solitaire() {
             {tableau.map((column, colIndex) => (
               <div
                 key={colIndex}
-                onDragOver={handleDragOver}
-                onDrop={(e) => handleDropOnTableau(e, colIndex)}
                 style={{
                   width: '60px',
                   minHeight: '300px',
@@ -414,7 +419,7 @@ export default function Solitaire() {
                     <Card
                       key={card.id}
                       card={card}
-                      onDragStart={(e) => handleDragStart(e, card, 'tableau', colIndex)}
+                      onDoubleClick={() => handleCardDoubleClick(card, 'tableau', colIndex)}
                       style={{
                         position: cardIndex === 0 ? 'relative' : 'absolute',
                         top: cardIndex === 0 ? 0 : `${cardIndex * 20}px`,
@@ -425,6 +430,29 @@ export default function Solitaire() {
                 )}
               </div>
             ))}
+          </div>
+
+          {/* Instructions */}
+          <div style={{
+            textAlign: 'center',
+            marginTop: '20px',
+            fontSize: '12px',
+            color: '#333',
+            fontStyle: 'italic',
+            marginBottom: '16px'
+          }}>
+            💡 Double-click any card to move it
+          </div>
+
+          {/* New Game Button */}
+          <div style={{ textAlign: 'center' }}>
+            <button
+              onClick={newGame}
+              className="mac-button mac-button-primary"
+              style={{ fontSize: '12px', padding: '6px 16px' }}
+            >
+              New Game
+            </button>
           </div>
         </div>
       </div>
