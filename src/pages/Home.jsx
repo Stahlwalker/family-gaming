@@ -1152,7 +1152,7 @@ export default function Home() {
                 © 2025 Luke Stahl. All rights reserved.
               </p>
               <a
-                href="https://lucasstahl.com/"
+                href="https://lukestahl.io/"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ textDecoration: 'none' }}
